@@ -1,0 +1,57 @@
+name: Build Windows App
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyQt6
+        pip install opencv-python
+        pip install pillow
+        pip install qtawesome
+        pip install ultralytics
+        pip install pyinstaller
+        pip install numpy
+    
+    - name: Download YOLO model
+      run: |
+        echo "Model file should be in repository"
+    
+    - name: Build with PyInstaller  # ← 这里替换成新的命令
+      run: |
+        pyinstaller CitrusVision.spec --clean --noconfirm
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CitrusVision-Windows
+        path: dist/CitrusVision.exe
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/CitrusVision.exe
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
